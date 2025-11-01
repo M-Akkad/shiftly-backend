@@ -1,17 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Models\ApplicationUser.cs" />
-    <Compile Remove="Models\Team.cs" />
-    <Compile Remove="Models\Wedstrijd.cs" />
-    <Compile Remove="Models\WedstrijdSpeler.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
@@ -20,17 +15,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.9" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Models\ApplicationUser.cs" />
-    <None Include="Models\Team.cs" />
-    <None Include="Models\Wedstrijd.cs" />
-    <None Include="Models\WedstrijdSpeler.cs" />
   </ItemGroup>
 
 </Project>

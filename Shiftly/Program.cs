@@ -1,62 +1,111 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
+﻿// Program.cs - API versie met Swagger
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using DAL;
+using DAL.Repositories;
+using BLL.Services;
 using Shiftly.Data;
-using Shiftly.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Add API Controllers
+builder.Services.AddControllers();
 
-// Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-// JWT
-var jwt = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwt["Key"]!);
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Add Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        Title = "Shiftly API",
+        Version = "v1",
+        Description = "Voetbalplanning API",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwt["Issuer"],
-            ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(key)
-        };
+            Name = "Shiftly Team"
+        }
     });
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+    // XML comments voor betere documentatie
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+});
+
+// Database
+builder.Services.AddDbContext<ShiftlyContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("ShiftlyConnection")));
+
+// Repositories (DAL)
+builder.Services.AddScoped<AdminRepository>();
+builder.Services.AddScoped<SpelerRepository>();
+builder.Services.AddScoped<WedstrijdRepository>();
+builder.Services.AddScoped<WedstrijdSpelerRepository>();
+
+// Services (BLL)
+builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<SpelerService>();
+builder.Services.AddScoped<WedstrijdService>();
+builder.Services.AddScoped<AfwezigheidService>();
+
+// CORS (optioneel, als je frontend vanaf andere origin gebruikt)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
-// seed roles later (we voegen een seed helper toe)
+// Database initialisatie en seeding
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    await SeedData.EnsureSeedDataAsync(services);
+    var context = scope.ServiceProvider.GetRequiredService<ShiftlyContext>();
+
+    // Voor ontwikkeling: verwijder oude database en maak nieuwe aan met test data
+    // WAARSCHUWING: EnsureDeleted verwijdert alle data!
+    // Voor productie: gebruik migrations in plaats van EnsureCreated
+    context.Database.EnsureDeleted();
+
+    DbInitializer.Initialize(context);
 }
 
-if (app.Environment.IsDevelopment())
+// Configure middleware
+// Swagger altijd inschakelen (niet alleen in Development)
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Shiftly API v1");
+    options.RoutePrefix = string.Empty; // Swagger UI op root URL
+});
 
-app.UseAuthentication();
+app.UseHttpsRedirection();
+
+// CORS (als je het hebt ingeschakeld)
+app.UseCors("AllowAll");
+
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Start app en toon URLs
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var addresses = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
+    Console.WriteLine("\n🚀 Shiftly API gestart!");
+    if (addresses != null)
+    {
+        foreach (var address in addresses.Addresses)
+        {
+            Console.WriteLine($"📖 Swagger UI beschikbaar op: {address}");
+        }
+    }
+    Console.WriteLine();
+});
 
 app.Run();
