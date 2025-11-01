@@ -23,7 +23,7 @@ public static class DbInitializer
             {
                 Naam = "Jan de Trainer",
                 Email = "jan@shiftly.nl",
-                WachtwoordHash = "tempwachtwoord123" // TODO: Hash implementeren
+                WachtwoordHash = "tempwachtwoord123"
             },
             new Admin
             {
@@ -52,7 +52,7 @@ public static class DbInitializer
         context.Spelers.AddRange(spelers);
         context.SaveChanges();
 
-        // Seed Wedstrijden (in de toekomst, zodat ze bruikbaar zijn voor testen)
+        // Seed Wedstrijden
         var wedstrijden = new Wedstrijd[]
         {
             new Wedstrijd
@@ -84,7 +84,7 @@ public static class DbInitializer
         context.Wedstrijden.AddRange(wedstrijden);
         context.SaveChanges();
 
-        // Seed WedstrijdSpelers (wijs enkele spelers toe aan wedstrijden)
+        // Seed WedstrijdSpelers
         var wedstrijdSpelers = new WedstrijdSpeler[]
         {
             // Wedstrijd 1

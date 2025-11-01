@@ -13,9 +13,7 @@ public class AdminService
         _adminRepository = adminRepository;
     }
 
-    /// <summary>
-    /// Haal admin op via ID
-    /// </summary>
+
     public async Task<AdminDTO?> GetByIdAsync(int id)
     {
         var admin = await _adminRepository.GetByIdAsync(id);
@@ -24,9 +22,7 @@ public class AdminService
         return MapToDTO(admin);
     }
 
-    /// <summary>
-    /// Haal admin op via email
-    /// </summary>
+
     public async Task<AdminDTO?> GetByEmailAsync(string email)
     {
         var admin = await _adminRepository.GetByEmailAsync(email);
@@ -35,9 +31,7 @@ public class AdminService
         return MapToDTO(admin);
     }
 
-    /// <summary>
-    /// Haal alle admins op
-    /// </summary>
+
     public async Task<List<AdminDTO>> GetAllAsync()
     {
         var admins = await _adminRepository.GetAllAsync();

@@ -20,9 +20,6 @@ public class WedstrijdService
         _spelerRepository = spelerRepository;
     }
 
-    /// <summary>
-    /// Haal wedstrijd op via ID (zonder details)
-    /// </summary>
     public async Task<WedstrijdDTO?> GetByIdAsync(int id)
     {
         var wedstrijd = await _wedstrijdRepository.GetByIdAsync(id);
@@ -31,9 +28,6 @@ public class WedstrijdService
         return MapToDTO(wedstrijd);
     }
 
-    /// <summary>
-    /// Haal wedstrijd op via ID (met Admin en Spelers details)
-    /// </summary>
     public async Task<WedstrijdDTO?> GetByIdWithDetailsAsync(int id)
     {
         var wedstrijd = await _wedstrijdRepository.GetByIdWithDetailsAsync(id);
@@ -42,24 +36,15 @@ public class WedstrijdService
         return MapToDTOWithDetails(wedstrijd);
     }
 
-    /// <summary>
-    /// Haal alle wedstrijden op (met details, gesorteerd op datum/tijd)
-    /// </summary>
+
     public async Task<List<WedstrijdDTO>> GetAllWedstrijdenAsync()
     {
         var wedstrijden = await _wedstrijdRepository.GetAllWedstrijdenAsync();
         return wedstrijden.Select(MapToDTOWithDetails).ToList();
     }
 
-    /// <summary>
-    /// UC-03: Voeg nieuwe wedstrijd toe met validatie
-    /// Business rules:
-    /// - B-03.01: Alle velden verplicht
-    /// - B-03.02: Datum/tijd moet in de toekomst liggen
-    /// </summary>
     public async Task<(bool Success, string Message, WedstrijdDTO? Wedstrijd)> VoegWedstrijdToeAsync(WedstrijdDTO wedstrijdDto)
     {
-        // B-03.01: Valideer dat alle velden zijn ingevuld
         if (string.IsNullOrWhiteSpace(wedstrijdDto.Locatie))
         {
             return (false, "Alle wedstrijdgegevens moeten worden ingevuld", null);
@@ -70,14 +55,13 @@ public class WedstrijdService
             return (false, "Alle wedstrijdgegevens moeten worden ingevuld", null);
         }
 
-        // B-03.02: Valideer dat datum/tijd in de toekomst ligt
         var wedstrijdDateTime = wedstrijdDto.Datum.Date + wedstrijdDto.Tijd;
         if (wedstrijdDateTime <= DateTime.Now)
         {
             return (false, "De datum en tijd moeten in de toekomst liggen", null);
         }
 
-        // Maak DAL model
+        // Maak object aan
         var wedstrijd = new Wedstrijd
         {
             Datum = wedstrijdDto.Datum,
@@ -91,16 +75,11 @@ public class WedstrijdService
         await _wedstrijdRepository.AddAsync(wedstrijd);
         await _wedstrijdRepository.SaveChangesAsync();
 
-        // K-03.01: Success message
         var resultDto = MapToDTO(wedstrijd);
         return (true, "Wedstrijd succesvol aangemaakt!", resultDto);
     }
 
-    /// <summary>
-    /// UC-04: Wijs speler toe aan wedstrijd met validatie
-    /// Business rules:
-    /// - B-04.01: Speler mag niet dubbel ingepland worden op hetzelfde moment
-    /// </summary>
+
     public async Task<(bool Success, string Message)> WijsSpelerToeAsync(int wedstrijdId, int spelerId)
     {
         // Haal wedstrijd op met details
@@ -110,21 +89,18 @@ public class WedstrijdService
             return (false, "Wedstrijd niet gevonden");
         }
 
-        // Check of speler bestaat
         var speler = await _spelerRepository.GetByIdAsync(spelerId);
         if (speler == null)
         {
             return (false, "Speler niet gevonden");
         }
 
-        // B-04.01: Check of speler al toegewezen is aan DEZE wedstrijd
         var bestaandeAssignment = await _wedstrijdSpelerRepository.GetByWedstrijdAndSpelerAsync(wedstrijdId, spelerId);
         if (bestaandeAssignment != null)
         {
             return (false, "Deze speler is al ingepland");
         }
 
-        // B-04.01: Check of speler al ingepland is op HETZELFDE MOMENT (andere wedstrijd)
         var isBeschikbaar = await _wedstrijdSpelerRepository.IsSpelerBeschikbaarAsync(
             spelerId,
             wedstrijd.Datum,
@@ -146,13 +122,9 @@ public class WedstrijdService
         await _wedstrijdSpelerRepository.AddAsync(wedstrijdSpeler);
         await _wedstrijdSpelerRepository.SaveChangesAsync();
 
-        // K-04.01: Success message
         return (true, "Speler succesvol toegewezen!");
     }
 
-    /// <summary>
-    /// Verwijder speler van wedstrijd
-    /// </summary>
     public async Task<(bool Success, string Message)> VerwijderSpelerVanWedstrijdAsync(int wedstrijdId, int spelerId)
     {
         var wedstrijdSpeler = await _wedstrijdSpelerRepository.GetByWedstrijdAndSpelerAsync(wedstrijdId, spelerId);
@@ -168,9 +140,7 @@ public class WedstrijdService
         return (true, "Speler verwijderd van wedstrijd");
     }
 
-    /// <summary>
-    /// Haal alle spelers op die NIET toegewezen zijn aan een specifieke wedstrijd
-    /// </summary>
+
     public async Task<List<SpelerDTO>> GetBeschikbareSpelers(int wedstrijdId)
     {
         var spelers = await _spelerRepository.GetSpelersNietInWedstrijdAsync(wedstrijdId);

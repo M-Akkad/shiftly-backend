@@ -17,9 +17,7 @@ public class SpelerService
         _wedstrijdRepository = wedstrijdRepository;
     }
 
-    /// <summary>
-    /// Haal speler op via ID
-    /// </summary>
+
     public async Task<SpelerDTO?> GetByIdAsync(int spelerId)
     {
         var speler = await _spelerRepository.GetByIdAsync(spelerId);
@@ -28,9 +26,7 @@ public class SpelerService
         return MapToDTO(speler);
     }
 
-    /// <summary>
-    /// Haal speler op via email
-    /// </summary>
+
     public async Task<SpelerDTO?> GetByEmailAsync(string email)
     {
         var speler = await _spelerRepository.GetByEmailAsync(email);
@@ -39,19 +35,13 @@ public class SpelerService
         return MapToDTO(speler);
     }
 
-    /// <summary>
-    /// Haal alle spelers op
-    /// </summary>
+
     public async Task<List<SpelerDTO>> GetAllAsync()
     {
         var spelers = await _spelerRepository.GetAllAsync();
         return spelers.Select(MapToDTO).ToList();
     }
 
-    /// <summary>
-    /// UC-05: Haal persoonlijk wedstrijdoverzicht op voor een speler
-    /// Toont alle wedstrijden waar de speler aan is toegewezen met hun status
-    /// </summary>
     public async Task<List<WedstrijdDTO>> GetMijnWedstrijdenAsync(int spelerId)
     {
         // Haal alle wedstrijden op waar deze speler aan toegewezen is
